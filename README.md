@@ -56,10 +56,8 @@ By hand instead:
 3. Copy both files of `data/lua/` to `lua_scripts/Attriboost/`. If your
    configuration folder is elsewhere, change `CONF` at the top of
    `Attriboost_Serveur.lua`.
-4. In the game, add the rows of the `dbc` entry of `installer.json` to
-   `DBFilesClient\Spell.dbc` and `Item.dbc` with a DBC editor, then put both
-   files and the content of `data/art` (`Interface\Attriboost\...`) into a patch
-   archive, `Data\patch-Z.MPQ` for instance, with an MPQ editor.
+
+The game side is in section 4.
 
 ### 3.2 Build
 
@@ -92,6 +90,14 @@ Section 6.4 puts them on a vendor or a loot table.
 
 The installer has written the spells, items and images into the game folder you
 gave it; its output names the archive. Give that archive to the other players.
+
+By hand instead:
+
+1. Take `DBFilesClient\Spell.dbc` and `Item.dbc` from the game's archives (the
+   last one holding each) and add to them, with a DBC editor, the rows of the
+   `dbc` entry of `installer.json`.
+2. Put both files and the content of `data/art` (`Interface\Attriboost\...`) into
+   a patch archive, `Data\patch-Z.MPQ` for instance, with an MPQ editor.
 
 Every player also needs AIO's client addon, `AIO_Client`, in `Interface\AddOns`:
 without it the window never opens; the chat commands still work.
