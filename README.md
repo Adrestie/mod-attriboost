@@ -72,7 +72,7 @@ your server, see section 6.5.
 |---|---|
 | The module | AzerothCore, WotLK branch, up to date |
 | The user interface | [mod-ale](https://github.com/azerothcore/mod-ale) (the AzerothCore Lua Engine, formerly mod-eluna) and [AIO](https://github.com/Rochet2/AIO), installed and working: AIO's server part on the server, its client addon on every player's client (section 4) |
-| Running the installer | the WoW-mods installer, `installer.exe`, from the `installer/` folder of this repository; MySQL running, and its command-line client `mysql.exe`, which comes with MySQL Server |
+| Running the installer | the WoW-mods installer, `installer.exe`, from the [WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases); MySQL running, and its command-line client `mysql.exe`, which comes with MySQL Server |
 
 The interface is how players spend their points. Without ALE and AIO, only the
 chat commands (`.attriboost ...`) remain.
@@ -84,7 +84,7 @@ chat commands (`.attriboost ...`) remain.
 ### 3.1 Run the installer
 
 Stop the world server and close the game, then run `installer.exe`, the
-WoW-mods installer (`installer/` folder of this repository), and give it this package's
+WoW-mods installer ([WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases)), and give it this package's
 folder, or drop the folder on `installer.exe`. Keep the package where you
 downloaded it: the installer refuses to run from your server's `modules`
 folder.
