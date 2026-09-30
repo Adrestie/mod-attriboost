@@ -48,6 +48,19 @@ installer refuses to run. The first time, it asks for the world server folder
 configuration and Lua scripts, and adds its spells, items and images to the
 game's archives.
 
+By hand instead:
+
+1. Copy this folder to `modules/mod-attriboost` in your AzerothCore sources.
+2. Copy `conf/attriboost.conf.dist` to `configs/modules/`, once as is and once
+   as `attriboost.conf`, with `Attriboost.Enable = 1`.
+3. Copy both files of `data/lua/` to `lua_scripts/Attriboost/`. If your
+   configuration folder is elsewhere, change `CONF` at the top of
+   `Attriboost_Serveur.lua`.
+4. In the game, add the rows of the `dbc` entry of `installer.json` to
+   `DBFilesClient\Spell.dbc` and `Item.dbc` with a DBC editor, then put both
+   files and the content of `data/art` (`Interface\Attriboost\...`) into a patch
+   archive, `Data\patch-Z.MPQ` for instance, with an MPQ editor.
+
 ### 3.2 Build
 
 From your build folder, with the world server stopped:
