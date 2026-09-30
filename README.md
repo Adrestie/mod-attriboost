@@ -1,58 +1,15 @@
 # mod-attriboost
 
 An AzerothCore module (WotLK 3.3.5a) that grants players **attribute points** to
-spend freely across ten statistics, plus extra **talent points**. Points are
-earned by trading in two items, the *Tome of Knowledge* and the *Book of
-Talents*, which you hand out however you like: loot, vendor, event reward, quest.
+spend across ten statistics, plus extra **talent points**. Points come from two
+books, the *Tome of Knowledge* and the *Book of Talents*, which you hand out as
+you like. Players spend them in a window (ALE and AIO) or with chat commands.
 
 This is an extended fork of [AnchyDev/Attriboost](https://github.com/AnchyDev/Attriboost).
 
-Points are spent through **a user interface**, an ALE addon opened from a
-minimap button or a slash command, which trades several books at once and lets
-you lay out your points before committing. It needs ALE and AIO (see
-requirements). There is no NPC. When the client runs the ForeverUI interface
-(mod-forever-ui), the window and the minimap button give way to an
-"Attributes" tab of a Progression window in the Camelot style, which Item
-Upgrade shares when it is installed too. The module draws that window itself,
-with the textures ForeverUI installs, and only asks ForeverUI to add its button
-to the micro menu. Without ForeverUI nothing changes.
-
-Every point spent on a statistic adds one stack to a permanent aura: the core
-multiplies the aura's amount by its stack count. Nothing is recomputed on a
-timer, so the runtime cost is nil. Those ten auras are hidden; the player sees a
-single aura, *Attributes*, whose tooltip lists every bonus.
-
 ---
 
-## 1. What the package contains
-
-```
-mod-attriboost/
-├── README.md                        this guide
-├── LICENSE                          MIT, the licence of the original module
-├── conf/
-│   └── attriboost.conf.dist         caps, reset cost, on/off switch
-├── src/                             the C++ module (3 files)
-├── data/
-│   ├── sql/
-│   │   ├── db-world/base/
-│   │   │   ├── 01_attriboost_dbc.sql     the 10 spells and 2 items, server side
-│   │   │   ├── 02_attriboost_world.sql   the 2 items
-│   │   │   ├── 03_attriboost_strings.sql every text of the module, in each language
-│   │   │   └── 04_attriboost_commands.sql the help of the chat commands
-│   │   └── db-characters/base/
-│   │       └── 01_attriboost_characters.sql   the points table
-│   ├── lua/
-│   │   ├── Attriboost_Serveur.lua   bridge between the interface and the module
-│   │   └── Attriboost_Client.lua    the interface, shipped to the client by AIO
-│   └── art/Interface/Attriboost/    the images of the Progression window, its tab
-│                                    and its gauge, written into the game by the installer
-└── installer.json                   what the WoW-mods installer puts in place and removes:
-                                     the spells and items in the DBC files, the files,
-                                     the database rows
-```
-
-### Identifiers used
+## 1. Identifiers used
 
 | What | Identifiers |
 |---|---|
@@ -81,139 +38,65 @@ chat commands (`.attriboost ...`) remain.
 
 ## 3. Server installation
 
-### 3.1 Run the installer
+### 3.1 Install
 
-Stop the world server and close the game, then run `installer.exe`, the
-WoW-mods installer ([WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases)), and give it this package's
-folder, or drop the folder on `installer.exe`. Keep the package where you
-downloaded it: the installer refuses to run from your server's `modules`
-folder.
-
-Its window asks for two folders the first time, then remembers them:
-
-* the world server folder, the one holding `worldserver.exe`;
-* the game folder, the one holding `Wow.exe` and `Data`.
-
-It finds the rest from there: the configuration folder and the databases in
-`worldserver.conf`, the Lua script folder in `mod_ale.conf` (`lua_scripts` by
-default), your AzerothCore sources in the build folder's `CMakeCache.txt`, and
-`mysql.exe`. It shows whatever it found of the module before changing
-anything.
-
-Finding nothing of the module, it offers **Install**, which puts in place:
-
-* the module is copied to `modules/mod-attriboost` in your sources;
-* `attriboost.conf`, with `Attriboost.Enable = 1`, and `attriboost.conf.dist`
-  are written to the module configuration folder;
-* both Lua files go to `lua_scripts/Attriboost/`; if your configuration folder
-  is not the usual one, the path at the top of `Attriboost_Serveur.lua`
-  follows it;
-* the eleven spells and the two items are added to `Spell.dbc` and `Item.dbc`,
-  directly inside the game archive those files come from, and the module's
-  images (`data/art`) are written under `Interface\Attriboost` (section 4).
-
-It reads everything back from the disk and ends with `Installation complete.`,
-followed by the build commands.
+Stop the world server and close the game, then run `installer.exe` and give it
+this folder; keep it outside your server's `modules` folder, where the
+installer refuses to run. The first time, it asks for the world server folder
+(the one holding `worldserver.exe`) and the game folder (the one holding
+`Wow.exe` and `Data`). It copies the module into your sources, writes its
+configuration and Lua scripts, and adds its spells, items and images to the
+game's archives.
 
 ### 3.2 Build
 
-Run the commands the installer printed, from your build folder, the world
-server stopped: linking fails while it runs.
+From your build folder, with the world server stopped:
 
 ```
 cmake .
 cmake --build . --config RelWithDebInfo --target worldserver
 ```
 
-`cmake .` is what makes the build notice the new module.
-
 ### 3.3 Start up
 
-Start the server. On this first start the updater applies the five SQL files of
-`data/sql`: the spells and items (`spell_dbc`, `item_dbc`, `item_template`), the
-texts, the command help and the points table. If `Updates.EnableDatabases` in
-`worldserver.conf` does not cover the world and characters databases, the
-installer has applied them itself.
+On the first start, the core updater applies the module's SQL. A server that
+already ran the original Attriboost keeps every player's points (section 6.8).
 
-If the server already ran the original Attriboost, its `attriboost_attributes`
-table is kept, with every player's points: the characters file adds the columns
-this fork needs, each in its place. See section 6.9 for the rest of an upgrade.
+### 3.4 Hand out the books
 
-> **Why no DBC file has to be patched server side.** AzerothCore loads
-> `Spell.dbc` and `Item.dbc`, then tops them up from the `spell_dbc` and
-> `item_dbc` tables, growing its index table as needed. `01_attriboost_dbc.sql`
-> fills those two tables, so the server knows the ten spells and the two items
-> without a single file being touched.
-
-### 3.4 Check the server
-
-The log must show the module loading and no error mentioning
-`attriboost`. In game, as a game master:
-
-```
-.lookup spell Increased Stamina
-```
-
-must return spell `82007`. If nothing comes back, `01_attriboost_dbc.sql` was
-not applied to the right database.
-
-### 3.5 Hand out the books
-
-Nothing is wired up by default: how players get the books is your call. To try
-it right away:
+Nothing hands them out by default. To try it right away:
 
 ```
 .additem 82010 5
 .additem 82011 2
 ```
 
-See section 6.4 to put them on loot tables or on a vendor.
+Section 6.4 puts them on a vendor or a loot table.
 
 ---
 
 ## 4. Client side
 
-The installer has already written the spells and the items into the game folder
-you gave it. It writes into the archive that provides `Spell.dbc` and `Item.dbc`
-when that archive is one of yours, `patch-Z.MPQ` for instance; when they come
-from an official archive, into your last custom archive, or into a new
-`Data\patch-Z.MPQ` if you have none. The module's images go into your last
-custom archive, under `Interface\Attriboost`. Official archives are never
-modified, and only the module's rows are added: everything else in those files
-stays as it was.
+The installer has written the spells, items and images into the game folder you
+gave it; its output names the archive. Give that archive to the other players.
 
-Every player also needs AIO's client addon, `AIO_Client`, in the client's
-`Interface\AddOns` folder, as AIO's own instructions describe. Without it the
-interface never reaches the player; the chat commands still work.
-
-Other players' clients need the same rows: give them the archive the installer
-wrote to, whose path its output shows.
-
-### 4.1 Check
-
-Log back in and type `.additem 82010`. The book must show its name and icon.
-Once a point is spent, the *Attributes* aura must appear, its tooltip listing
-the bonus.
+Every player also needs AIO's client addon, `AIO_Client`, in `Interface\AddOns`:
+without it the window never opens; the chat commands still work.
 
 ---
 
 ## 5. Full check
 
-Run this once, in order, on a test character.
+On a test character:
 
 | # | Do this | Expect |
 |---|---|---|
 | 1 | `.lookup spell Increased Stamina` | returns spell 82007 |
 | 2 | `.additem 82010 1` | one *Tome of Knowledge*, correct name and icon |
-| 3 | Right-click the tome in your bags | the window opens and a minimap button appears (with ForeverUI: the Progression window opens on the "Attributes" tab, no minimap button); nothing else happens, the tome stays in the bags |
-| 4 | Close the window, type `/attributs` | the window opens again |
-| 5 | In the window, trade the tome | three attribute points credited |
-| 6 | In the window, put one point on Stamina and confirm | the *Attributes* aura appears, its tooltip reads +5 Stamina, stamina goes up; no *Increased Stamina* aura in the buff bar |
-| 7 | `.attriboost allocate stamina 2`, then hover the *Attributes* aura | two more points; the tooltip reads +15 Stamina |
-| 8 | Character sheet | stamina up by 15, that is three stacks of five points |
-| 9 | `.attriboost reset` | everything returns to the pool, money is charged, *Attributes reset.* |
-| 10 | `.attriboost exchange 999` on a French client | *Nombre de livres invalide.*, the message in the client's language |
-| 11 | `.help attriboost exchange` | *Syntax: .attriboost exchange $count* and its explanation |
+| 3 | Right-click the tome | the window opens (with ForeverUI: the "Attributes" tab of the Progression window) |
+| 4 | Trade the tome in the window | three attribute points credited |
+| 5 | Put one point on Stamina and confirm | the *Attributes* aura appears, its tooltip reads +5 Stamina |
+| 6 | `.attriboost reset` | the points return to the pool, money is charged |
 
 If a step fails, section 7 lists the usual causes.
 
@@ -274,7 +157,7 @@ To change a value, say stamina to 20 per point:
    and tooltip read the amount through `$s1`;
 3. the installer writes that file into the game when it installs the module:
    on a server where the module is already installed, that means running it
-   twice, which also erases the players' points (see section 6.9);
+   twice, which also erases the players' points (see section 6.8);
 4. server side, change the same value in `01_attriboost_dbc.sql`, column
    `EffectBasePoints_1` of that spell, and re-run the file.
 
@@ -341,20 +224,7 @@ there: otherwise the old one comes back on login with its old amount.
   language, which is **French** on a 3.3.5 client. Writing into `Name_Lang_frFR`
   would show German.
 
-### 6.7 How the interface looks
-
-Everything sits in the `RC` table at the top of `Attriboost_Client.lua`:
-
-* `MM_ANGLE` places the button around the minimap, in degrees, zero at the right
-  and ninety at the top;
-* `MM_ICONE` changes its icon;
-* `LARGEUR`, `LIGNE_H`, `CARTE_H` set the window's dimensions;
-* `ICONES` maps a fallback icon to each statistic;
-* `AMORTI`, `FONDU`, `FLOTTANT` set animation speeds.
-
-Every texture used comes from the stock 3.3.5 client.
-
-### 6.8 Uninstalling
+### 6.7 Uninstalling
 
 Stop the world server, close the game, and run the installer again on this
 folder. Finding the module, even in part, it lists what it found and, once you
@@ -392,7 +262,7 @@ that character next logs in, since their item no longer exists. Auctions and
 guild banks are not covered by that: if books may be there, clear them out
 before uninstalling.
 
-### 6.9 Upgrading
+### 6.8 Upgrading
 
 **Every upgrade.** The installer only installs or removes: run on an installed
 module, it removes it, players' points included. An upgrade therefore follows
@@ -438,42 +308,6 @@ DELETE FROM npc_text WHERE ID IN (441190, 441191, 441192);
 | Accents are mangled | the SQL was run without `--default-character-set=utf8mb4` |
 | A player keeps an old bonus | their aura was saved in `character_aura`; delete the row with the server stopped |
 | Points are there but have no effect | the character was dead when they were applied; auras are laid back on at the next login |
-
----
-
-## 8. Technical notes
-
-**How it works.** One point spent adds a stack to that statistic's aura.
-`AuraEffect::CalculateAmount` multiplies the effect's amount by the stack count.
-The module writes that count directly through `Aura::SetStackAmount`, which
-**bypasses the DBC's `CumulativeAura` limit**: the only real bounds are the
-`Attriboost.Max.*` settings.
-
-**One aura in sight.** The ten auras carry the attributes that hide a spell from
-the client (`SPELL_ATTR0_DO_NOT_DISPLAY`, `SPELL_ATTR0_DO_NOT_LOG`,
-`SPELL_ATTR1_NO_AURA_ICON`, the ones Stellar Tarot uses); they only concern the
-client, and the auras apply all the same. The module keeps a dummy aura,
-*Attributes* (82012), on the player while any point is spent. The interface adds
-one line per statistic under its tooltip: the statistic spell's own text, with
-the amount of all its points. The server sends the points at login, and again
-whenever that tooltip shows, since chat commands change them without the
-interface.
-
-**Damage and healing are two separate paths.** Aura type 13 feeds the spell
-damage bonus, type 135 the healing bonus. The *Spell damage* and *Healing power*
-statistics carry one each, so they really are independent. The old item mods 41
-and 42, flagged deprecated in the core, concern items only and have nothing to
-do with these auras.
-
-**The auras persist.** They are written to `character_aura` on logout and
-reloaded as they were, carrying that day's base amount. Changing a value only
-reaches a player who already has points after a reset, or after their row in
-that table is deleted.
-
-**The interface decides nothing.** It sends requests that the server-side Lua
-script validates, then carries out through the module's commands, whose database
-writes are synchronous. The state displayed is always read back from the
-database afterwards.
 
 ---
 
