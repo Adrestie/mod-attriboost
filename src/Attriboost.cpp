@@ -222,9 +222,10 @@ void LoadAttriboosts()
 {
     auto qResult = CharacterDatabase.Query("SELECT * FROM attriboost_attributes");
 
+    // No result: the table is empty, no player has points yet.
     if (!qResult)
     {
-        LOG_ERROR("module", "Failed to load from 'attriboost_attributes' table.");
+        LOG_INFO("module", "Loaded '0' player attriboosts.");
         return;
     }
 
