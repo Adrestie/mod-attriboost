@@ -224,6 +224,9 @@ there: otherwise the old one comes back on login with its old amount.
 
 ### 6.6 Texts and languages
 
+Every text comes in English, French, German, Spanish (`esES`) and Russian;
+other clients get English.
+
 * **Messages and interface**: one source for every text the module shows,
   `03_attriboost_strings.sql`, table `module_string` for English,
   `module_string_locale` for every other language. The C++ module reads its chat
