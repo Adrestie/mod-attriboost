@@ -3,7 +3,8 @@
 -- AzerothCore charge Spell.dbc et Item.dbc PUIS complète depuis ces tables, en
 -- agrandissant l'index si besoin (DBCDatabaseLoader::Load). Côté SERVEUR, ce
 -- fichier suffit donc : aucun DBC à patcher. Le CLIENT, lui, doit recevoir les
--- mêmes lignes pour les icônes et les infobulles — voir tools/patch_client_dbc.cmd.
+-- mêmes lignes pour les icônes et les infobulles : l'installeur WoW-mods les
+-- écrit dans l'archive du jeu (entrée `dbc` de installer.json).
 --
 -- PIÈGE DES LOCALES : les noms de colonnes d'AzerothCore sont décalés par
 -- rapport aux blocs du fichier DBC. Le 3e bloc localisé, `*_Lang_koKR` ici,

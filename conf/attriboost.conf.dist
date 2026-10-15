@@ -25,15 +25,6 @@ Attriboost.Enable = 0
 Attriboost.ResetCost = 2500000
 
 #
-#    Attriboost.DisablePvP
-#        Description: Enable/Disable the attributes in PvP combat.
-#                     0 - Disabled
-#        Default:     1 - Enabled
-#
-
-Attriboost.DisablePvP = 1
-
-#
 #    Attriboost.Max.*
 #        Description: The max value each attribute can be allocated.
 #        Default:     100

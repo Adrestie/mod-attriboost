@@ -130,7 +130,6 @@ All of it lives in `attriboost.conf`, re-read on every restart:
 ```
 Attriboost.Enable = 1              # 0 turns everything off without uninstalling
 Attriboost.ResetCost = 2500000     # cost of one reset, in copper
-Attriboost.DisablePvP = 1          # inherited from the original module, no effect
 Attriboost.Max.Stamina = 100       # maximum points per statistic
 Attriboost.Max.Strength = 50
 Attriboost.Max.Agility = 50
@@ -174,11 +173,11 @@ To change a value, say stamina to 20 per point:
    is not written since it grants 1%;
 2. the texts need no change: the name carries no number, and the description
    and tooltip read the amount through `$s1`;
-3. the installer writes that file into the game when it installs the module:
-   on a server where the module is already installed, that means running it
-   twice, which also erases the players' points (see section 6.8);
-4. server side, change the same value in `01_attriboost_dbc.sql`, column
-   `EffectBasePoints_1` of that spell, and re-run the file.
+3. server side, change the same value in `01_attriboost_dbc.sql`, column
+   `EffectBasePoints_1` of that spell;
+4. run the installer on this folder and choose **Update** (section 6.8): it
+   writes the new value into the game and the server, and keeps the players'
+   points. Rebuild, then start the server.
 
 One warning about **critical strike damage**: the percentage applies to the
 whole critical hit, not just to the bonus part. At +50%, a melee critical goes
@@ -286,11 +285,22 @@ before uninstalling.
 
 ### 6.8 Upgrading
 
-**Every upgrade.** The installer only installs or removes: run on an installed
-module, it removes it, players' points included. An upgrade therefore follows
-the steps below by hand, and the new rows of `installer.json` have to
-reach the game archive the same way. The *Tome of Knowledge*, for one, is now a
-plain miscellaneous item with no use.
+**Every upgrade.** Stop the world server, close the game, run the installer
+on the new version's folder and choose **Update**. It removes the installed
+version and installs this one, but keeps:
+
+* every player's points, spent and unspent, and the talent points the Books
+  of Talents gave (table `attriboost_attributes`, and the characters'
+  extra talent points);
+* your `attriboost.conf`: the new one takes each of your settings that still
+  exists, and drops the others.
+
+The auras saved in `character_aura` go, and are laid back on at each
+player's next login with the new values. Rebuild the server as the installer
+says; on the next start, the core updater applies the module's SQL again.
+Give the players the game archive again: it carries the new spells, items and
+images. **Remove**, on the other hand, takes everything away, players' points
+included.
 
 **From the original Attriboost.** Nothing to do for the points: the characters
 file keeps the existing table and adds the missing columns (section 3.3).

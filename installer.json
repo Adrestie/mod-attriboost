@@ -64,6 +64,7 @@
         }
       ],
       "tables": ["attriboost_attributes"],
+      "kept_on_update": ["attriboost_attributes"],
       "rows": [
         {
           "table": "character_aura",
