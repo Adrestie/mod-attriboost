@@ -91,7 +91,6 @@ void SaveAttriboosts();
 void SaveAttriboostsForPlayer(Player* /*player*/);
 void SaveAttriboostsForPlayerDirect(Player* /*player*/);
 void ApplyAttributes(Player* /*player*/, Attriboosts* /*attributes*/);
-void DisableAttributes(Player* /*player*/);
 bool TryAddAttribute(Attriboosts* /*attributes*/, uint32 /*attribute*/);
 void ResetAttributes(Attriboosts* /*attributes*/);
 bool HasAttributesToSpend(Player* /*player*/);
@@ -109,18 +108,9 @@ public:
 
     virtual void OnPlayerLogin(Player* /*player*/) override;
     virtual void OnPlayerLogout(Player* /*player*/) override;
-    virtual void OnPlayerLeaveCombat(Player* /*player*/) override;
 
     uint32 GetRandomAttributeForClass(Player* /*player*/);
     std::string GetAttributeName(uint32 /*attribute*/);
-};
-
-class AttriboostUnitScript : public UnitScript
-{
-public:
-    AttriboostUnitScript() : UnitScript("AttriboostUnitScript") { }
-
-    void OnDamage(Unit* /*attacker*/, Unit* /*victim*/, uint32& /*damage*/);
 };
 
 class AttriboostWorldScript : public WorldScript

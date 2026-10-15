@@ -41,39 +41,6 @@ void AttriboostPlayerScript::OnPlayerLogout(Player* player)
     SaveAttriboostsForPlayer(player);
 }
 
-void AttriboostPlayerScript::OnPlayerLeaveCombat(Player* player)
-{
-    if (!player)
-    {
-        return;
-    }
-
-    // This hook is called when removing the player from the world (like shutdown),
-    // even when you are not in combat.
-    if (player->IsDuringRemoveFromWorld() || !player->IsInWorld())
-    {
-        return;
-    }
-
-    if (!sConfigMgr->GetOption<bool>("Attriboost.Enable", false))
-    {
-        return;
-    }
-
-    if (!sConfigMgr->GetOption<bool>("Attriboost.DisablePvP", false))
-    {
-        return;
-    }
-
-    auto attributes = GetAttriboosts(player);
-    if (!attributes)
-    {
-        return;
-    }
-
-    ApplyAttributes(player, attributes);
-}
-
 uint32 AttriboostPlayerScript::GetRandomAttributeForClass(Player* player)
 {
     switch (player->getClass())
@@ -579,70 +546,6 @@ void ApplyAttributes(Player* player, Attriboosts* attributes)
     }
 }
 
-void DisableAttributes(Player* player)
-{
-    auto attributes = GetAttriboosts(player);
-    if (!attributes)
-    {
-        return;
-    }
-
-    if (player->GetAura(ATTR_SPELL_STAMINA))
-    {
-        player->RemoveAura(ATTR_SPELL_STAMINA);
-    }
-
-    if (player->GetAura(ATTR_SPELL_STRENGTH))
-    {
-        player->RemoveAura(ATTR_SPELL_STRENGTH);
-    }
-
-    if (player->GetAura(ATTR_SPELL_AGILITY))
-    {
-        player->RemoveAura(ATTR_SPELL_AGILITY);
-    }
-
-    if (player->GetAura(ATTR_SPELL_INTELLECT))
-    {
-        player->RemoveAura(ATTR_SPELL_INTELLECT);
-    }
-
-    if (player->GetAura(ATTR_SPELL_SPIRIT))
-    {
-        player->RemoveAura(ATTR_SPELL_SPIRIT);
-    }
-
-    if (player->GetAura(ATTR_SPELL_SPELL_POWER))
-    {
-        player->RemoveAura(ATTR_SPELL_SPELL_POWER);
-    }
-
-    if (player->GetAura(ATTR_SPELL_CRITICAL_STRIKE_DAMAGE))
-    {
-        player->RemoveAura(ATTR_SPELL_CRITICAL_STRIKE_DAMAGE);
-    }
-
-    if (player->GetAura(ATTR_SPELL_ALL_RESISTS))
-    {
-        player->RemoveAura(ATTR_SPELL_ALL_RESISTS);
-    }
-
-    if (player->GetAura(ATTR_SPELL_PENETRATION))
-    {
-        player->RemoveAura(ATTR_SPELL_PENETRATION);
-    }
-
-    if (player->GetAura(ATTR_SPELL_HEALING_POWER))
-    {
-        player->RemoveAura(ATTR_SPELL_HEALING_POWER);
-    }
-
-    if (player->GetAura(ATTR_SPELL_SUMMARY))
-    {
-        player->RemoveAura(ATTR_SPELL_SUMMARY);
-    }
-}
-
 bool TryAddAttribute(Attriboosts* attributes, uint32 attribute)
 {
     bool alreadyMaxValue = false;
@@ -896,35 +799,6 @@ void AttriboostWorldScript::OnShutdownInitiate(ShutdownExitCode /*code*/, Shutdo
     SaveAttriboosts();
 }
 
-void AttriboostUnitScript::OnDamage(Unit* attacker, Unit* victim, uint32& /*damage*/)
-{
-    if (!attacker || !victim)
-    {
-        return;
-    }
-
-    if (!sConfigMgr->GetOption<bool>("Attriboost.Enable", false))
-    {
-        return;
-    }
-
-    if (!sConfigMgr->GetOption<bool>("Attriboost.DisablePvP", false))
-    {
-        return;
-    }
-
-    auto p1 = attacker->ToPlayer();
-    auto p2 = victim->ToPlayer();
-
-    if (!p1 || !p2)
-    {
-        return;
-    }
-
-    //DisableAttributes(p1);
-    //DisableAttributes(p2);
-}
-
 // ---------------------------------------------------------------------------
 // Commandes joueur
 // ---------------------------------------------------------------------------
@@ -1168,6 +1042,5 @@ void SC_AddAttriboostScripts()
 {
     new AttriboostWorldScript();
     new AttriboostPlayerScript();
-    new AttriboostUnitScript();
     new AttriboostCommandScript();
 }
