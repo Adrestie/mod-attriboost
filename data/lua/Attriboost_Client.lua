@@ -30,6 +30,26 @@
     dans L, état dans S, fonctions dans H.
 ------------------------------------------------------------------------------]]
 local AIO = AIO or require("AIO")
+
+-- Côté serveur, avant d'expédier la fenêtre : la table du module et toutes
+-- ses colonnes existent-elles ? Sans elles, Attriboost_Serveur.lua ne
+-- s'enregistre pas (voir là-bas) ; la fenêtre ne part pas non plus, plutôt
+-- que de s'ouvrir sans personne pour lui répondre.
+if AIO.IsServer() then
+    local attendues = { unallocated = true, stamina = true, strength = true, agility = true,
+        intellect = true, spirit = true, spellpower = true, criticalstrikedamage = true,
+        allresists = true, spellpenetration = true, healingpower = true }
+    local q = CharDBQuery("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() "
+                          .. "AND TABLE_NAME = 'attriboost_attributes'")
+    if q then
+        repeat attendues[q:GetString(0):lower()] = nil until not q:NextRow()
+    end
+    if next(attendues) then
+        print("[Attriboost] table attriboost_attributes missing or incomplete: window not sent.")
+        return
+    end
+end
+
 if AIO.AddAddon() then
     return                                  -- côté serveur : on s'arrête ici
 end
