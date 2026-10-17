@@ -44,6 +44,40 @@ local COLONNES = "unallocated"
 for _, s in ipairs(STATS) do COLONNES = COLONNES .. ", " .. s.colonne end
 
 -- ---------------------------------------------------------------------------
+-- La table du module, vérifiée avant tout : ce script arrive par lua_scripts,
+-- le module C++ et son SQL par la compilation. Tant que le worldserver n'a
+-- pas été recompilé avec le module (2026-10-17 : CMake pas reconfiguré), la
+-- table manque, et une requête sur une table absente arrête le serveur
+-- entier. Sans elle, le script ne s'enregistre pas et le dit dans le journal.
+-- ---------------------------------------------------------------------------
+local function TableComplete()
+    local attendues = { unallocated = true }
+    for _, s in ipairs(STATS) do attendues[s.colonne] = true end
+    local q = CharDBQuery("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() "
+                          .. "AND TABLE_NAME = 'attriboost_attributes'")
+    if q then
+        repeat
+            attendues[q:GetString(0):lower()] = nil
+        until not q:NextRow()
+    end
+    local manquantes = {}
+    for colonne in pairs(attendues) do table.insert(manquantes, colonne) end
+    return #manquantes == 0, q and table.concat(manquantes, ", ") or nil
+end
+
+local complete, manquantes = TableComplete()
+if not complete then
+    if manquantes then
+        print("[Attriboost] table attriboost_attributes incomplete (missing: " .. manquantes
+              .. "): script disabled. Rebuild the worldserver with mod-attriboost to apply its SQL.")
+    else
+        print("[Attriboost] table attriboost_attributes missing: script disabled. "
+              .. "Reconfigure CMake and rebuild the worldserver with mod-attriboost to apply its SQL.")
+    end
+    return
+end
+
+-- ---------------------------------------------------------------------------
 -- Configuration du module, lue une fois par chargement du script
 -- ---------------------------------------------------------------------------
 local function LireConf()
