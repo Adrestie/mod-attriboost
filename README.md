@@ -1,357 +1,58 @@
 # mod-attriboost
 
-An AzerothCore module (WotLK 3.3.5a) that grants players **attribute points** to
-spend across ten statistics, plus extra **talent points**. Points come from two
-books, the *Tome of Knowledge* and the *Book of Talents*, which you hand out as
-you like. Players spend them in a window (ALE and AIO) or with chat commands.
+An AzerothCore module (WotLK 3.3.5a) that gives players attribute points to spend across ten statistics, and extra talent points, earned from two books.
 
-This is an extended fork of [AnchyDev/Attriboost](https://github.com/AnchyDev/Attriboost).
+## Key features
 
----
+- Ten statistics: Stamina, Strength, Agility, Intellect, Spirit, spell damage, critical strike damage, all resistances, spell penetration, healing power.
+- Two books, the *Tome of Knowledge* (attribute points) and the *Book of Talents* (talent points), handed out as you like.
+- Points spent in a window, with a reset for gold.
+- Texts in English, French, German, Spanish and Russian.
 
-## 1. Identifiers used
+## Dependencies
 
-| What | Identifiers |
+| Dependency | For |
 |---|---|
-| Aura spells | 82000 to 82009, hidden; 82012, the visible *Attributes* aura |
-| Items | 82010 (Tome of Knowledge), 82011 (Book of Talents) |
-| Texts (`module_string`) | module `mod-attriboost`: 1 to 99 messages, 101 and up the interface |
-| Chat commands (`command`) | `attriboost` and its four subcommands |
+| [AzerothCore](https://github.com/azerothcore/azerothcore-wotlk) (WotLK 3.3.5a) | the server |
+| [mod-ale](https://github.com/azerothcore/mod-ale) | the window (server side); without it, chat commands only |
+| [AIO](https://github.com/Rochet2/AIO) | the window: `AIO_Server` in `lua_scripts`, and the `AIO_Client` addon on every client |
+| [mod-forever-ui](https://github.com/Adrestie/mod-forever-ui) | optional: the window becomes a tab of its Progression window |
 
-No Blizzard identifier is reused. If one of these numbers is already taken on
-your server, see section 6.5.
+## How to install
 
----
+1. Download `installer.exe` from the [WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases).
+2. Stop the worldserver and close the game.
+3. Run `installer.exe`, give it this folder and the folders it asks for, click **Check**, then **Install**.
+4. Rebuild the worldserver. On its next start, the core applies the module's SQL.
+5. The installer writes the spells, items and images into `Data\patch-Z.MPQ`: give that archive to the other players.
 
-## 2. Requirements
+## How to update
 
-| For | You need |
-|---|---|
-| The module | AzerothCore, WotLK branch, up to date |
-| The user interface | [mod-ale](https://github.com/azerothcore/mod-ale) (the AzerothCore Lua Engine, formerly mod-eluna) and [AIO](https://github.com/Rochet2/AIO), installed and working: AIO's server part on the server, its client addon on every player's client (section 4) |
-| Running the installer | the WoW-mods installer, `installer.exe`, from the [WoW-mods-installer releases](https://github.com/Adrestie/WoW-mods-installer/releases); MySQL running, and its command-line client `mysql.exe`, which comes with MySQL Server |
+Same steps with the new version's folder, choosing **Update** instead of **Install**. Players' points and your `attriboost.conf` settings are kept. Rebuild the worldserver, then give the players the new `patch-Z.MPQ`.
 
-The interface is how players spend their points. Without ALE and AIO, only the
-chat commands (`.attriboost ...`) remain.
+## How to uninstall
 
----
-
-## 3. Server installation
-
-### 3.1 Install
-
-Stop the world server and close the game, then run `installer.exe` and give it
-this folder; keep it outside your server's `modules` folder, where the
-installer refuses to run. The first time, it asks for the world server folder
-(the one holding `worldserver.exe`) and the game folder (the one holding
-`Wow.exe` and `Data`). It copies the module into your sources, writes its
-configuration and Lua scripts, and adds its spells, items and images to the
-game's archives.
-
-By hand instead:
-
-1. Copy this folder to `modules/mod-attriboost` in your AzerothCore sources.
-2. Copy `conf/attriboost.conf.dist` to `configs/modules/`, once as is and once
-   as `attriboost.conf`, with `Attriboost.Enable = 1`.
-3. Copy both files of `data/lua/` to `lua_scripts/Attriboost/`. If your
-   configuration folder is elsewhere, change `CONF` at the top of
-   `Attriboost_Serveur.lua`.
-
-The game side is in section 4.
-
-### 3.2 Build
-
-From your build folder, with the world server stopped:
-
-```
-cmake .
-cmake --build . --config RelWithDebInfo --target worldserver
-```
-
-### 3.3 Start up
-
-On the first start, the core updater applies the module's SQL. A server that
-already ran the original Attriboost keeps every player's points (section 6.8).
-
-### 3.4 Hand out the books
-
-Nothing hands them out by default. To try it right away:
-
-```
-.additem 82010 5
-.additem 82011 2
-```
-
-Section 6.4 puts them on a vendor or a loot table.
-
----
-
-## 4. Client side
-
-The installer has written the spells, items and images into the game folder you
-gave it; its output names the archive. Give that archive to the other players.
-
-By hand instead:
-
-1. Take `DBFilesClient\Spell.dbc` and `Item.dbc` from the game's archives (the
-   last one holding each) and add to them, with a DBC editor, the rows of the
-   `dbc` entry of `installer.json`.
-2. Put both files and the content of `data/art` (`Interface\Attriboost\...`) into
-   a patch archive, `Data\patch-Z.MPQ` for instance, with an MPQ editor.
-
-Every player also needs AIO's client addon, `AIO_Client`, in `Interface\AddOns`:
-without it the window never opens; the chat commands still work.
-
----
-
-## 5. Full check
-
-On a test character:
-
-| # | Do this | Expect |
-|---|---|---|
-| 1 | `.lookup spell Increased Stamina` | returns spell 82007 |
-| 2 | `.additem 82010 1` | one *Tome of Knowledge*, correct name and icon |
-| 3 | Right-click the tome | the window opens (with ForeverUI: the "Attributes" tab of the Progression window) |
-| 4 | Trade the tome in the window | three attribute points credited |
-| 5 | Put one point on Stamina and confirm | the *Attributes* aura appears, its tooltip reads +5 Stamina |
-| 6 | `.attriboost reset` | the points return to the pool, money is charged |
-
-If a step fails, section 7 lists the usual causes.
-
----
-
-## 6. Customisation
-
-### 6.1 Caps, cost, on/off
-
-All of it lives in `attriboost.conf`, re-read on every restart:
-
-```
-Attriboost.Enable = 1              # 0 turns everything off without uninstalling
-Attriboost.ResetCost = 2500000     # cost of one reset, in copper
-Attriboost.Max.Stamina = 100       # maximum points per statistic
-Attriboost.Max.Strength = 50
-Attriboost.Max.Agility = 50
-Attriboost.Max.Intellect = 50
-Attriboost.Max.Spirit = 50
-Attriboost.Max.SpellPower = 100
-Attriboost.Max.CriticalStrikeDamage = 50
-Attriboost.Max.AllResists = 50
-Attriboost.Max.SpellPenetration = 100
-Attriboost.Max.HealingPower = 100
-```
-
-Lowering a cap takes nothing away from players already above it: their points
-stay applied until they reset.
-
-### 6.2 What one point is worth
-
-That is the aura's amount, and it lives in two places that must agree: the
-`spell_dbc` table on the server, the `Spell.dbc` file on the client. Shipped
-values:
-
-| Statistic | Spell | Per point |
-|---|---|---|
-| Stamina | 82007 | +5 |
-| Strength | 82002 | +5 |
-| Agility | 82000 | +5 |
-| Intellect | 82001 | +5 |
-| Spirit | 82003 | +5 |
-| Spell damage | 82006 | +5 |
-| Critical strike damage | 82004 | +1% |
-| All resistances | 82008 | +1 |
-| Spell penetration | 82009 | +1 |
-| Healing power | 82005 | +10 |
-
-To change a value, say stamina to 20 per point:
-
-1. in `installer.json`, entry `Spell.dbc`, find the row whose `"0"` field is
-   82007 and set its `"80"` field to **19**. The applied amount is always that field **plus
-   one**: `EffectBasePoints` is 19 for a bonus of 20. A field missing from the
-   list is zero; add it if you need to, as with spell 82004 whose `"80"` field
-   is not written since it grants 1%;
-2. the texts need no change: the name carries no number, and the description
-   and tooltip read the amount through `$s1`;
-3. server side, change the same value in `01_attriboost_dbc.sql`, column
-   `EffectBasePoints_1` of that spell;
-4. run the installer on this folder and choose **Update** (section 6.8): it
-   writes the new value into the game and the server, and keeps the players'
-   points. Rebuild, then start the server.
-
-One warning about **critical strike damage**: the percentage applies to the
-whole critical hit, not just to the bonus part. At +50%, a melee critical goes
-from twice to three times normal damage. Raise that one carefully.
-
-### 6.3 Points per book
-
-A *Tome of Knowledge* gives three attribute points, a *Book of Talents* gives one
-talent point. To change the former, edit `ATTR_POINTS_PER_BOOK` in
-`src/Attriboost.h` and rebuild. Keep `POINTS_PAR_LIVRE` at the top of
-`Attriboost_Serveur.lua` in step.
-
-### 6.4 How players get the books
-
-The module hands out nothing. A few ways to do it, to adapt:
-
-```sql
--- On a vendor (replace 12345 with your NPC's entry)
-INSERT INTO npc_vendor (entry, item, maxcount, incrtime, ExtendedCost)
-VALUES (12345, 82010, 0, 0, 0);
-
--- On a creature's loot table, one time in five
-INSERT INTO creature_loot_template (Entry, Item, Chance, QuestRequired, LootMode, GroupId, MinCount, MaxCount)
-VALUES (12345, 82010, 20, 0, 1, 0, 1, 1);
-```
-
-Remember to blacklist both books from your auction house bot if you run one,
-otherwise it will put them up for sale.
-
-### 6.5 Moving the identifiers
-
-If one number is already taken on your server, change it everywhere at once:
-
-| Identifier | Where to change it |
-|---|---|
-| An aura spell | `src/Attriboost.h`, `01_attriboost_dbc.sql`, `installer.json`, the `STATS` table in `Attriboost_Serveur.lua` |
-| The *Attributes* aura | `ATTR_SPELL_SUMMARY` in `src/Attriboost.h`, `01_attriboost_dbc.sql`, `installer.json`, `RC.RESUME` in `Attriboost_Client.lua` |
-| An item | `src/Attriboost.h`, `01_attriboost_dbc.sql`, `02_attriboost_world.sql`, `installer.json`, `Attriboost_Serveur.lua`, the `RC` table in `Attriboost_Client.lua` |
-
-After changing a spell identifier, **delete the rows carrying the old number
-from `character_aura`, with the server stopped**. The module's auras are saved
-there: otherwise the old one comes back on login with its old amount.
-
-### 6.6 Texts and languages
-
-Every text comes in English, French, German, Spanish (`esES`) and Russian;
-other clients get English.
-
-* **Messages and interface**: one source for every text the module shows,
-  `03_attriboost_strings.sql`, table `module_string` for English,
-  `module_string_locale` for every other language. The C++ module reads its chat
-  messages there, the server-side Lua script its refusals, and the interface
-  receives its own texts from that script, sent with its code when the player
-  logs in. Each player gets the texts of their client's language, English when
-  there is no row for it. Numbers 1 to 99 are messages, 101 and up the
-  interface. To add a language, add one row per number to
-  `module_string_locale` with that client's locale code (`deDE`, `esES`,
-  `ruRU`...), apply it and restart: no rebuild. Keep every `{}`, which stands
-  for a value.
-* **Item names**: `02_attriboost_world.sql`, table `item_template` for English,
-  `item_template_locale` for translations.
-* **Aura names and tooltips**: `01_attriboost_dbc.sql` and
-  `installer.json`. Careful, AzerothCore's column names are off by one
-  slot: the `Name_Lang_koKR` column actually holds the DBC file's third
-  language, which is **French** on a 3.3.5 client. Writing into `Name_Lang_frFR`
-  would show German.
-
-### 6.7 Uninstalling
-
-Stop the world server, close the game, and run the installer again on this
-folder. Finding the module, even in part, it lists what it found and, once you
-confirm **Remove**, removes all of it:
-
-* in the characters database, the talent points the Books of Talents granted
-  are taken back first, then the saved auras and the points table go;
-* in the world database, the module's rows in `spell_dbc`, `item_dbc`,
-  `item_template`, `item_template_locale`, `module_string`,
-  `module_string_locale` and `command`, and the updater's record of its files
-  in `updates`, so that a later installation applies them again;
-* the module's rows in `Spell.dbc` and `Item.dbc`, in every custom archive of
-  the game and in the server's DBC folder, with the texts its spells added, and
-  every file under `Interface\Attriboost` in those archives;
-  everything else in those files is left as it is, and an archive that no
-  longer changes anything, such as one the installation created, is deleted;
-* the module folder in `modules/`, whatever its name, `attriboost.conf` and
-  `attriboost.conf.dist`, both Lua files wherever they are in the script
-  folder, and the `Attriboost` folder unless it holds files of your own.
-
-It then checks that nothing is left and prints the build commands: rebuild, and
-the module is gone from the world server. If you had started removing the
-module by hand, run the installer anyway: it removes whatever is left.
-
-Only the points this module granted are taken back: the core keeps a single
-counter of extra talent points, which other modules may feed too. A character
-who had spent them gets their talents reset at the next login, by the core
-itself. Points granted by a version of this module older than the
-`talentpoints` column were not recorded; if Attriboost is the only source of
-extra talent points on your server, `UPDATE characters SET
-extraBonusTalentCount = 0;` takes those back as well.
-
-Books left in a player's bags, bank or mail are deleted by the core itself when
-that character next logs in, since their item no longer exists. Auctions and
-guild banks are not covered by that: if books may be there, clear them out
-before uninstalling.
-
-### 6.8 Upgrading
-
-**Every upgrade.** Stop the world server, close the game, run the installer
-on the new version's folder and choose **Update**. It removes the installed
-version and installs this one, but keeps:
-
-* every player's points, spent and unspent, and the talent points the Books
-  of Talents gave (table `attriboost_attributes`, and the characters'
-  extra talent points);
-* your `attriboost.conf`: the new one takes each of your settings that still
-  exists, and drops the others.
-
-The auras saved in `character_aura` go, and are laid back on at each
-player's next login with the new values. Rebuild the server as the installer
-says; on the next start, the core updater applies the module's SQL again.
-Give the players the game archive again: it carries the new spells, items and
-images. **Remove**, on the other hand, takes everything away, players' points
-included.
-
-**From the original Attriboost.** Nothing to do for the points: the characters
-file keeps the existing table and adds the missing columns (section 3.3).
-
-**From a version of this module that had the librarian** (NPC 441153). The NPC,
-its two quests and its texts are gone, and the module no longer carries the
-script they called. Remove what an earlier install left behind, in the world
-database:
-
-```sql
-DELETE FROM creature WHERE id = 441153;
-DELETE FROM creature_template WHERE entry = 441153;
-DELETE FROM creature_template_model WHERE CreatureID = 441153;
-DELETE FROM creature_queststarter WHERE id = 441153;
-DELETE FROM creature_questender WHERE id = 441153;
-DELETE FROM quest_template WHERE ID IN (441153, 441154);
-DELETE FROM quest_template_addon WHERE ID IN (441153, 441154);
-DELETE FROM quest_request_items WHERE ID IN (441153, 441154);
-DELETE FROM quest_offer_reward WHERE ID IN (441153, 441154);
-DELETE FROM npc_text WHERE ID IN (441190, 441191, 441192);
-```
-
----
-
-## 7. Troubleshooting
-
-| Symptom | Usual cause |
-|---|---|
-| The *Attributes* aura has no name and no icon, or the ten auras show in the buff bar | the client patch is not installed, or its archive does not win over the others |
-| The *Attributes* tooltip lists no bonus | ALE or AIO missing, or `AIO_Client` not ticked: the list comes from the interface |
-| Books show a question mark | same, or `item_dbc` was not filled server side |
-| Every command answers *The attribute system is disabled.* | `Attriboost.Enable` is zero, or the config file is not in `configs/modules/` |
-| The `.attriboost` command is refused | the server was not rebuilt, or linking failed because it was still running |
-| Messages come in English on another client | `03_attriboost_strings.sql` holds no row for that language (section 6.6) |
-| The interface shows bare words (`titre`, `valider`...), messages read `#15` or `[mod-attriboost] missing text 3` | `03_attriboost_strings.sql` was not applied, or the server-side Lua script failed to load: see the ALE log |
-| The interface does not open | ALE or AIO missing; check that both Lua files are in the script folder |
-| Accents are mangled | the SQL was run without `--default-character-set=utf8mb4` |
-| A player keeps an old bonus | their aura was saved in `character_aura`; delete the row with the server stopped |
-| Points are there but have no effect | the character was dead when they were applied; auras are laid back on at the next login |
-
----
+Same steps, choosing **Remove**. Everything goes, database included: the talent points the books granted are taken back. Rebuild the worldserver.
 
 ## Credits
 
-* **[AnchyDev/Attriboost](https://github.com/AnchyDev/Attriboost)** — the
-  original module this one is built on.
-* **Foe** — the idea of using auras as attributes, credited by the original
-  module.
+- [AnchyDev/Attriboost](https://github.com/AnchyDev/Attriboost), the original module this one forks.
+- Foe, for the idea of using auras as attributes.
 
-This fork adds four statistics, the user interface, the chat commands, its own
-item and spell identifiers, and the tooling in this package. The interface
-replaces the original module's librarian NPC.
+## Configuration
 
-Licensed under the MIT licence, like the original module it forks: see `LICENSE`.
+`attriboost.conf` sets:
+
+- the module on or off;
+- the cost of a reset;
+- the maximum points per statistic.
+
+## Commands
+
+| Command | |
+|---|---|
+| `/attriboost` | opens the window (also `/attributs`) |
+| `.attriboost exchange <count>` | trades Tomes of Knowledge for attribute points |
+| `.attriboost talents <count>` | trades Books of Talents for talent points |
+| `.attriboost allocate <statistic> <count>` | spends points on a statistic |
+| `.attriboost reset` | returns every point to the pool, for gold |
